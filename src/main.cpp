@@ -20,23 +20,29 @@
 
 /*
  * Config register 0x00, len 2: 
- * | write EE | reboot | Rate | cont read | Channel B mode | Channel A mode |
+ * Byte 1:
+ *  | reboot | write EE | Rate | cont read | Channel B mode | Channel A mode |
  *   Channel A Mode (Bit 0, 1): 0 -> off, 1 -> gain 128, 2 -> gain 32
  *   Channel B Mode (Bit 2): 0 -> off, 1 -> gain 32
  *   Cont Read (Bit 3, 4): 0 -> read reg, 1 -> scale1 + scale 2, 2 -> continue over all
  *   Rate (Bit 5): 0 -> 10SPS, 1 -> 80SPS (not connected)
- *   Reboot (Bit 6): 1 -> reboot
- *   Write EE (Bit 7): 1 -> write config, tara, i2c address to EEPROM
- *   AVG Count (Bit 8 - 15): averaging counter
- * i2c_addr 0x01, len 1
- * tara 1 0x02, len 3
- * tara 2 0x03, len 3
- * scale 1 0x04, len 3
- * scale 2 0x05, len 3
- * avg scale 1 0x06, len 3
- * avg scale 2 0x07, len 3
- * raw scale 1 0x08, len 3
- * raw scale 2 0x09, len 3
+ *   Write EE (Bit 6): 1 -> write config, tara, i2c address to EEPROM
+ *   Reboot (Bit 7): 1 -> reboot
+ * Byte 2:
+ *   AVG Count: exponential averaging counter
+ * other registers:
+ * name        | addr | len
+ * --------------------------
+ * i2c_addr    | 0x01 | 1
+ * tara A      | 0x02 | 3
+ * tara B      | 0x03 | 3
+ * scale A     | 0x04 | 3
+ * scale B     | 0x05 | 3
+ * avg scale A | 0x06 | 3
+ * avg scale B | 0x07 | 3
+ * raw scale A | 0x08 | 3
+ * raw scale B | 0x09 | 3
+ * status      | 0x0a | 1
  */
 
 #include <EEPROM.h>
@@ -90,8 +96,6 @@ volatile uint8_t current_reg = 0;
 volatile uint8_t reg_pos = 0;
 // Tracks the current register sub pointer position
 volatile uint8_t reg_sub_pos = 0;
-// prevent to much sleep while in commuication
-volatile uint32_t last_wake = 0;
 
 enum Register_num_t {
   config_reg_num = 0,
@@ -151,7 +155,7 @@ uint8_t timonel_buf[12] = {0x7D, APP_MAGIC, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
  * send-buffer when using this callback
  */
 void requestEvent() {
-  last_wake = millis();
+  // Timonel special
   if(current_reg == 0x82) {
     TinyWireS.send(timonel_buf[reg_sub_pos]);
     //TinyWireS.send('Q');
@@ -166,7 +170,7 @@ void requestEvent() {
   } else if(current_reg == 0x86) { // jump to bootloader
     ((void (*)(void))0)();
   }
-
+  // std register access
   TinyWireS.send(regs.raw[reg_pos + reg_sub_pos]);
   // Increment the reg position on each read, and loop back to zero
   reg_sub_pos++;
@@ -202,7 +206,6 @@ void requestEvent() {
  */
 void receiveEvent(uint8_t count) {
   // some sanity checks
-  last_wake = millis();
   if (count < 1) {
     return;
   }
@@ -215,6 +218,7 @@ void receiveEvent(uint8_t count) {
   reg_sub_pos = 0;
   count--;
   if (!count) {
+    // Timonel special
     if(current_reg == 0x80) { // RESETMCU
       TinyWireS.send(0x7F); // RESETACK
     } else if(current_reg == 0x82) { // GETTMNLV Command Get our Version
@@ -223,6 +227,7 @@ void receiveEvent(uint8_t count) {
     } else if(current_reg == 0x86) { // EXITTMNL in our case we enter the bootloader
       TinyWireS.send(0x79); // ACKEXITT
     }
+    // end Timonel special
     // This write was only to set the buffer for next read
     return;
   }
@@ -280,6 +285,7 @@ hx711_chanGain_t get_to_measure(hx711_chanGain_t last_measured) {
 
 void parse_config() {
   bool reboot = regs.reg.config_reg & (1<<REBOOT_FLAG);
+  regs.reg.i2c_addr &= 0x7F;
   if(regs.reg.config_reg & (1<<WRITE_EEPROM_FLAG)) {
     EEPROM.update(1, EE_MAGIC);
     regs.reg.config_reg &= ~(1<<WRITE_EEPROM_FLAG);
@@ -371,6 +377,7 @@ void setup() {
   } else {
     regs.reg.i2c_addr = DEFAULT_I2C_SLAVE_ADDRESS;
   }
+  regs.reg.i2c_addr &= 0x7F;
   regs.reg.config_reg &= ~(1<<REBOOT_FLAG);
   regs.reg.config_reg &= ~(1<<WRITE_EEPROM_FLAG);
 
@@ -407,8 +414,6 @@ void setup() {
 }
 
 void loop() {
-  uint32_t ti = millis();
-
   if(reparse_config) {
     reparse_config = false;
     parse_config();

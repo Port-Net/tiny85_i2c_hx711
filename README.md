@@ -1,7 +1,9 @@
 Library to use ATTiny85 as I2C slave to get measurements from HX711
 
-It's controlled like standard I2C devices by registers.
-Its possible to measure only one channel with ~10 Hz or switch between the two channels wich recuces the sampling rate to about 1 Hz.
+Thanks for the developer of TinyWire and usiTwiSlave
+
+The chip controlled like standard I2C devices by register access.
+Its possible to measure only one channel with ~10 Hz or switch between the two channels wich recuces the sampling rate to about 1 Hz. The scale registers get only updated if the corresponding channel is enabled.
 Support for therate pin is build in but not used because the used board provide no access to it.
 There is support to use Timonel bootloader to been able to upgrade the software in system via I2C. Therefore the Timonel command for get version and switch-to-app (in this case switch to bootloader) are supported.
 
@@ -18,13 +20,13 @@ Config register 0x00, len 2: <br>
     averaging counter<br>
     
 i2c_addr| 0x01, len 1<br>
-tara 1 | 0x02, len 3<br>
-tara 2 | 0x03, len 3<br>
-scale 1| 0x04, len 3<br>
-scale 2| 0x05, len 3<br>
-avg scale 1| 0x06, len 3<br>
-avg scale 2| 0x07, len 3<br>
-raw scale 1| 0x08, len 3<br>
-raw scale 2| 0x09, len 3<br>
+tara A | 0x02, len 3<br>
+tara B | 0x03, len 3<br>
+scale A| 0x04, len 3<br>
+scale B| 0x05, len 3<br>
+avg scale A| 0x06, len 3<br>
+avg scale B| 0x07, len 3<br>
+raw scale A| 0x08, len 3<br>
+raw scale B| 0x09, len 3<br>
 <br>
-To change the I2C address write reg 1 and then set "Write EE" to one to store. The address is activated on next reboot.
+To change the I2C address write reg 1 and then set "Write EE" to one to store config. The address is activated on next reboot. On store config and tara is saved.
