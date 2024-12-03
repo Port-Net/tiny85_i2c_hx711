@@ -160,7 +160,7 @@ void requestEvent() {
     TinyWireS.send(timonel_buf[reg_sub_pos]);
     //TinyWireS.send('Q');
     reg_sub_pos++;
-    if(0 && reg_sub_pos >= 12) {
+    if(reg_sub_pos >= 12) {
       reg_sub_pos = 0;
       current_reg = 0;
     }

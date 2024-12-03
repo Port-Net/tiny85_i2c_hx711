@@ -506,6 +506,7 @@ ISR( USI_START_VECTOR )
   if ( !( usi_pins & USI_PINS_SDA ) )
   */
   // if SCL is low in this point then the start may be valid
+  usi_pins = PIN_USI & USI_PINS_SCL_SDA;
   if ( !( usi_pins & USI_PINS_SCL ) )
   {
     // a Stop Condition did not occur
