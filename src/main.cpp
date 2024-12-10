@@ -51,7 +51,7 @@
 #include <avr/io.h>
 #include "Adafruit_HX711.h"
 
-#define DEFAULT_I2C_SLAVE_ADDRESS 0x34 // the 7-bit address (remember to change this when adapting this example)
+#define DEFAULT_I2C_SLAVE_ADDRESS 0x1E // the 7-bit address (remember to change this when adapting this example)
 
 #define HX711_DT  4
 #define HX711_SCK 3
