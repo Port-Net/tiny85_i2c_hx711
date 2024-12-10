@@ -115,9 +115,9 @@ uint8_t reg_len[num_regs] = {2,1,3,3,3,3,3,3,3,3,1};
 
 #pragma pack(push, 1)
 struct three_bytes_t {
-  uint8_t b0;
-  uint8_t b1;
   uint8_t b2;
+  uint8_t b1;
+  uint8_t b0;
 };
 
 union regs_t {
