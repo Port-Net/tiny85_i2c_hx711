@@ -1,6 +1,6 @@
 Library to use ATTiny85 as I2C slave to get measurements from HX711
 
-Thanks for the developer of TinyWire and usiTwiSlave
+Thanks for the developer of TinyWire and usiTwiSlave. The includes version allows addressing up to 0x7f
 
 The chip controlled like standard I2C devices by register access.
 Its possible to measure only one channel with ~10 Hz or switch between the two channels wich recuces the sampling rate to about 1 Hz. The scale registers get only updated if the corresponding channel is enabled.
